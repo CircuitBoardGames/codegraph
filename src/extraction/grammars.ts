@@ -289,7 +289,12 @@ export async function initGrammars(): Promise<void> {
  * MIT) — byte-identical to the npm tarball's artifact. It extends the
  * tree-sitter-javascript grammar the same way tree-sitter-typescript does,
  * adding `struct_declaration` and the `arkui_component_expression` build()
- * DSL. Nix: tree-sitter-wasms doesn't ship it; we vendor a wasm built from
+ * DSL. Bash: tree-sitter-wasms ships an old bash build whose external scanner
+ * fails under web-tree-sitter 0.25 ("Parse error: resolved is not a function" on
+ * any script that reaches it -- 38 of 45 on one real repo); we vendor the
+ * prebuilt tree-sitter-bash.wasm from the tree-sitter-bash 0.25.1 npm package
+ * (MIT) -- byte-identical to the npm tarball's artifact.
+ * Nix: tree-sitter-wasms doesn't ship it; we vendor a wasm built from
  * nix-community/tree-sitter-nix @ 3d0173d (MIT) with tree-sitter-cli 0.25.10
  * (`generate` + `build --wasm`, ABI 15 — upstream's checked-in parser.c is
  * still ABI 13; all 54 upstream corpus tests pass on the regenerated parser).
@@ -312,7 +317,7 @@ export async function initGrammars(): Promise<void> {
  */
 const VENDORED_WASM_LANGS: ReadonlySet<GrammarLanguage> = new Set([
   'pascal', 'scala', 'lua', 'luau', 'csharp', 'r', 'cfml', 'cfscript', 'cfquery',
-  'cobol', 'vbnet', 'erlang', 'terraform', 'arkts', 'nix',
+  'cobol', 'vbnet', 'erlang', 'terraform', 'arkts', 'nix', 'bash',
   'typescript', 'tsx', 'javascript', 'jsx', 'java', 'python', 'go',
   // R7a (C/C++ kernel port prep): tree-sitter-c v0.24.2 (b780e47) +
   // tree-sitter-cpp v0.23.4 (f41e1a0), parser.c/scanner.c sha-matched against
