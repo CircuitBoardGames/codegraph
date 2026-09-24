@@ -32,6 +32,40 @@ describe('Sync Module', () => {
       }
     });
 
+    // tree-sitter-wasms' bash build (ABI 13) corrupts the shared WASM heap under web-tree-sitter
+    // 0.25: in ONE index run the first script parses and every later one fails ("Parse error:
+    // resolved is not a function") with zero nodes -- 13 of 14 real hook scripts, measured. The
+    // vendored tree-sitter-bash 0.25.1 wasm parses all of them. One file cannot show it.
+    it('indexes every script in a run, not only the first', async () => {
+      const dir = path.join(testDir, 'scripts');
+      fs.mkdirSync(dir, { recursive: true });
+      for (let i = 0; i < 6; i++) {
+        fs.writeFileSync(path.join(dir, `s${i}.sh`), [
+          '#!/bin/sh',
+          'set -eu',
+          `usage${i}() {`,
+          '  cat <<EOF',
+          'usage: $0 <cmd>',
+          'EOF',
+          '}',
+          `run${i}() {`,
+          '  out=$(usage' + i + ' 2>&1)',
+          '  case "${1:-}" in',
+          '    -h|--help) printf "%s\\n" "$out" ;;',
+          '    *) [ -n "$out" ] && echo ok ;;',
+          '  esac',
+          '}',
+          `run${i} "$@"`,
+          '',
+        ].join('\n'));
+      }
+      await cg.sync();
+      for (let i = 0; i < 6; i++) {
+        const nodes = cg.getNodesInFile(`scripts/s${i}.sh`);
+        expect(nodes.some((n) => n.kind === 'function' && n.name === `run${i}`), `scripts/s${i}.sh`).toBe(true);
+      }
+    });
+
     it('should sync newly added extensionless Bash shebang scripts', async () => {
       const binDir = path.join(testDir, 'bin');
       fs.mkdirSync(binDir, { recursive: true });
