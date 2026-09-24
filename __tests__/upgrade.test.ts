@@ -477,7 +477,24 @@ describe('runUpgrade beta signup offer', () => {
 // Post-upgrade self-heal of installed agent surfaces
 // ---------------------------------------------------------------------------
 
+describe('fork: an upgrade leaves agent surfaces alone by default', () => {
+  it('runs no `codegraph install --refresh` without CODEGRAPH_SELF_HEAL=1', async () => {
+    delete process.env.CODEGRAPH_SELF_HEAL;
+    const { deps, calls } = makeDeps({
+      method: { kind: 'npm', scope: 'global' },
+      currentVersion: '0.9.8',
+      hasCommand: (cmd) => cmd === 'codegraph',
+    });
+    expect(await runUpgrade({}, deps)).toBe(0);
+    expect(calls.runs.some((r) => r.args.includes('--refresh'))).toBe(false);
+  });
+});
+
 describe('post-upgrade refresh of installed agent surfaces', () => {
+  // Opt-in in this fork (CODEGRAPH_SELF_HEAL=1); these pin the behaviour once opted in.
+  beforeEach(() => { process.env.CODEGRAPH_SELF_HEAL = '1'; });
+  afterEach(() => { delete process.env.CODEGRAPH_SELF_HEAL; });
+
   it('runs `codegraph install --refresh` via the NEW binary after a successful npm upgrade', async () => {
     const { deps, calls } = makeDeps({
       method: { kind: 'npm', scope: 'global' },

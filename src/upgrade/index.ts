@@ -30,9 +30,11 @@ import * as https from 'https';
 import { spawnSync } from 'child_process';
 import { ansiColorsEnabled } from '../ui/color';
 
-export const REPO = 'colbymchenry/codegraph';
+// CircuitBoardGames fork: upgrades come from OUR releases (shell support, upstream #1203), on the
+// `hub` branch -- never from upstream, which would silently drop the fork's changes.
+export const REPO = 'CircuitBoardGames/codegraph';
 export const NPM_PACKAGE = '@colbymchenry/codegraph';
-const RAW_BASE = `https://raw.githubusercontent.com/${REPO}/main`;
+const RAW_BASE = `https://raw.githubusercontent.com/${REPO}/hub`;
 export const INSTALL_SH_URL = `${RAW_BASE}/install.sh`;
 
 // ---------------------------------------------------------------------------
@@ -405,8 +407,11 @@ export async function runUpgrade(opts: UpgradeOptions, deps: UpgradeDeps): Promi
     } catch {
       /* an inconclusive probe must not fail the upgrade */
     }
+    // Fork: agent surfaces are wired by hand where this fork is used, so an upgrade must never
+    // rewrite them. Both self-heal steps are opt-in (CODEGRAPH_SELF_HEAL=1).
+    const selfHeal = process.env.CODEGRAPH_SELF_HEAL === '1';
     try {
-      await selfHealPromptHook(deps);
+      if (selfHeal) await selfHealPromptHook(deps);
     } catch {
       /* a hook-wiring hiccup must not fail the upgrade */
     }
@@ -414,7 +419,7 @@ export async function runUpgrade(opts: UpgradeOptions, deps: UpgradeDeps): Promi
     // just proved that's a stale shadowed install, spawning it would rewrite
     // the agent surfaces with the very templates the refresh exists to heal —
     // skip, and point at the manual command for after the PATH is fixed.
-    if (probe !== 'mismatch') {
+    if (selfHeal && probe !== 'mismatch') {
       try {
         selfHealInstalledSurfaces(deps);
       } catch {
