@@ -1,0 +1,15 @@
+# A .forgejo/workflows directory makes the forge run THIS instead of upstream's .github/workflows.
+name: Gate
+on:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  bash:
+    name: bash support (tsc + Bash tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: sh .forgejo/gate.sh
