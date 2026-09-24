@@ -487,6 +487,8 @@ describe('fork: an upgrade leaves agent surfaces alone by default', () => {
     });
     expect(await runUpgrade({}, deps)).toBe(0);
     expect(calls.runs.some((r) => r.args.includes('--refresh'))).toBe(false);
+    // and says nothing that reads as a fault: the skip is deliberate, the PATH is fine.
+    expect(calls.logs.join('\n')).not.toMatch(/PATH is fixed/);
   });
 });
 

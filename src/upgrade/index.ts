@@ -425,7 +425,8 @@ export async function runUpgrade(opts: UpgradeOptions, deps: UpgradeDeps): Promi
       } catch {
         /* a refresh hiccup must not fail the upgrade */
       }
-    } else {
+    } else if (selfHeal) {
+      // Only a real shadowing install earns this hint; with self-heal off the skip is deliberate.
       deps.log(c.dim('Skipped refreshing agent instructions/config — run `codegraph install --refresh` once the PATH is fixed.'));
     }
     // Reached only after a real binary update (check/up-to-date/npx/source
